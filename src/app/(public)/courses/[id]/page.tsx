@@ -3,23 +3,18 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Course } from '@/types';
-import { getCourseById, API_BASE_URL } from '@/lib/api';
+import { Course, Lecture } from '@/types';
+import { getCourseById, getLecturesByCourse, API_BASE_URL } from '@/lib/api';
 import { CourseDetailSkeleton } from '@/components/ui/CourseSkeleton';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
-import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { EmptyState } from '@/components/ui/EmptyState';
 import {
-  ClockIcon,
   BookOpenIcon,
-  UsersIcon,
-  StarIcon,
-  CheckCircleIcon,
-  ArrowRightIcon,
-  GraduationCapIcon,
   VideoIcon,
-  AwardIcon,
-  ShieldCheckIcon,
+  ArrowRightIcon,
+  ClockIcon,
+  RefreshIcon,
 } from '@/components/ui/icons';
 
 export default function CourseDetailsPage() {
@@ -27,24 +22,29 @@ export default function CourseDetailsPage() {
   const courseId = params?.id as string;
 
   const [course, setCourse] = useState<Course | null>(null);
+  const [lectures, setLectures] = useState<Lecture[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [enrolled, setEnrolled] = useState<boolean>(false);
 
-  const fetchCourseData = useCallback(async () => {
+  const fetchCourseAndLectures = useCallback(async () => {
     if (!courseId) return;
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getCourseById(courseId);
-      setCourse(data);
+      const [courseData, lecturesData] = await Promise.all([
+        getCourseById(courseId),
+        getLecturesByCourse(courseId).catch(() => []),
+      ]);
+      setCourse(courseData);
+      setLectures(lecturesData);
     } catch (err: unknown) {
       const message =
         err instanceof Error
           ? err.message
-          : 'Failed to retrieve course details from backend API';
+          : 'Failed to retrieve course data from backend API';
       setError(message);
       setCourse(null);
+      setLectures([]);
     } finally {
       setIsLoading(false);
     }
@@ -53,10 +53,15 @@ export default function CourseDetailsPage() {
   useEffect(() => {
     if (!courseId) return;
     let isMounted = true;
-    getCourseById(courseId)
-      .then((data) => {
+
+    Promise.all([
+      getCourseById(courseId),
+      getLecturesByCourse(courseId).catch(() => []),
+    ])
+      .then(([courseData, lecturesData]) => {
         if (isMounted) {
-          setCourse(data);
+          setCourse(courseData);
+          setLectures(lecturesData);
           setIsLoading(false);
         }
       })
@@ -65,9 +70,10 @@ export default function CourseDetailsPage() {
           const message =
             err instanceof Error
               ? err.message
-              : 'Failed to retrieve course details from backend API';
+              : 'Failed to retrieve course data from backend API';
           setError(message);
           setCourse(null);
+          setLectures([]);
           setIsLoading(false);
         }
       });
@@ -94,14 +100,14 @@ export default function CourseDetailsPage() {
             error ||
             `Course with identifier "${courseId}" was not found in the backend API.`
           }
-          onRetry={fetchCourseData}
+          onRetry={fetchCourseAndLectures}
         />
         <div className="p-5 rounded-2xl bg-white border border-slate-200 text-sm space-y-3">
           <h4 className="font-semibold text-slate-800">
             Backend Verification Note
           </h4>
           <p className="text-slate-600 text-xs leading-relaxed">
-            As requested, no mock course data is generated. The system queried{' '}
+            The frontend queried{' '}
             <code className="font-mono bg-slate-100 px-1 py-0.5 rounded text-blue-600">
               {API_BASE_URL}/courses/{courseId}
             </code>
@@ -121,25 +127,15 @@ export default function CourseDetailsPage() {
     );
   }
 
-  const instructorName =
-    typeof course.instructor === 'object' && course.instructor !== null
-      ? course.instructor.name
-      : typeof course.instructor === 'string'
-      ? course.instructor
-      : 'DataPollex Faculty';
-
-  const instructorTitle =
-    typeof course.instructor === 'object' && course.instructor?.title
-      ? course.instructor.title
-      : 'Senior Technical Lead & Educator';
-
   const formattedPrice =
-    course.price === 0 || !course.price ? 'Free' : `$${course.price.toFixed(2)}`;
+    course.price === 0 || !course.price ? 'Free' : `$${Number(course.price).toFixed(2)}`;
+
+  const firstLecture = lectures.length > 0 ? lectures[0] : null;
 
   return (
     <div className="pb-20 space-y-10">
       {/* Top Hero Banner */}
-      <div className="bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900 text-white pt-10 pb-16 px-4 sm:px-6 lg:px-8 border-b border-slate-800">
+      <div className="bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900 text-white pt-10 pb-14 px-4 sm:px-6 lg:px-8 border-b border-slate-800">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Breadcrumb Navigation */}
           <nav className="flex items-center gap-2 text-xs text-slate-400">
@@ -159,306 +155,217 @@ export default function CourseDetailsPage() {
             </span>
           </nav>
 
-          <div className="space-y-4 max-w-3xl">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="blue" size="md">
-                {course.category || 'Technology'}
-              </Badge>
-              {course.level && (
-                <span className="text-xs font-medium text-slate-300 bg-white/10 px-2.5 py-0.5 rounded-full backdrop-blur-xs">
-                  {course.level}
-                </span>
-              )}
-              {course.isFeatured && (
-                <span className="text-xs font-semibold text-amber-300 bg-amber-500/20 px-2.5 py-0.5 rounded-full border border-amber-400/30">
-                  Featured
-                </span>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-8 space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-400/30">
+                <BookOpenIcon className="w-3.5 h-3.5" />
+                <span>Course Details</span>
+              </div>
+
+              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight">
+                {course.title}
+              </h1>
+
+              <p className="text-slate-300 text-sm sm:text-base leading-relaxed line-clamp-3">
+                {course.description}
+              </p>
+
+              <div className="flex flex-wrap items-center gap-6 pt-3 text-xs sm:text-sm text-slate-300">
+                <div className="flex items-center gap-1.5">
+                  <VideoIcon className="w-4 h-4 text-blue-400" />
+                  <span className="font-semibold text-white">
+                    {lectures.length}
+                  </span>{' '}
+                  Lecture{lectures.length === 1 ? '' : 's'}
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-400">Access:</span>
+                  <span className="font-bold text-emerald-400">
+                    {formattedPrice}
+                  </span>
+                </div>
+
+                {course.createdAt && (
+                  <div className="flex items-center gap-1.5 text-slate-400">
+                    <ClockIcon className="w-3.5 h-3.5" />
+                    <span>
+                      Added {new Date(course.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {firstLecture && (
+                <div className="pt-2">
+                  <Link
+                    href={`/courses/${courseId}/lectures/${firstLecture._id || firstLecture.id}`}
+                    className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-lg shadow-blue-600/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    <VideoIcon className="w-4 h-4" />
+                    Start Watching Lectures
+                    <ArrowRightIcon className="w-4 h-4" />
+                  </Link>
+                </div>
               )}
             </div>
 
-            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight">
-              {course.title}
-            </h1>
-
-            <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-              {course.shortDescription || course.description}
-            </p>
-
-            {/* Quick Metadata Bar */}
-            <div className="flex flex-wrap items-center gap-6 pt-2 text-xs sm:text-sm text-slate-300">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
-                  {instructorName.charAt(0)}
-                </div>
-                <span>
-                  Created by{' '}
-                  <strong className="text-white font-medium">
-                    {instructorName}
-                  </strong>
-                </span>
+            {/* Thumbnail preview */}
+            <div className="lg:col-span-4">
+              <div className="rounded-2xl overflow-hidden border border-slate-700/80 shadow-2xl bg-slate-800 aspect-video flex items-center justify-center">
+                {course.thumbnail ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={course.thumbnail}
+                    alt={course.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="text-slate-500 flex flex-col items-center">
+                    <BookOpenIcon className="w-12 h-12 text-slate-600 mb-2" />
+                    <span className="text-xs">No image preview</span>
+                  </div>
+                )}
               </div>
-
-              {course.duration && (
-                <div className="flex items-center gap-1.5">
-                  <ClockIcon className="w-4 h-4 text-slate-400" />
-                  <span>{course.duration}</span>
-                </div>
-              )}
-
-              {course.totalLessons && (
-                <div className="flex items-center gap-1.5">
-                  <BookOpenIcon className="w-4 h-4 text-slate-400" />
-                  <span>{course.totalLessons} lessons</span>
-                </div>
-              )}
-
-              {typeof course.rating === 'number' && course.rating > 0 && (
-                <div className="flex items-center gap-1.5 text-amber-400 font-semibold">
-                  <StarIcon className="w-4 h-4 fill-amber-400" />
-                  <span>{course.rating.toFixed(1)} Rating</span>
-                </div>
-              )}
-
-              {course.enrolledCount ? (
-                <div className="flex items-center gap-1.5 text-slate-300">
-                  <UsersIcon className="w-4 h-4 text-slate-400" />
-                  <span>{course.enrolledCount} enrolled</span>
-                </div>
-              ) : null}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Two-Column Layout */}
+      {/* Main Content Area: Overview & Lectures */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
-          {/* Left Column: Details, Syllabus, Outcomes */}
-          <div className="lg:col-span-8 space-y-10">
-            {/* Full Description */}
+          {/* Left / Main Column */}
+          <div className="lg:col-span-8 space-y-8">
+            {/* Course Description */}
             <section className="bg-white rounded-2xl border border-slate-200/90 p-6 sm:p-8 shadow-xs space-y-4">
               <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-                Course Overview
+                About This Course
               </h2>
-              <div className="prose prose-slate max-w-none text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+              <div className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
                 {course.description}
               </div>
             </section>
 
-            {/* What you'll learn */}
-            {course.learningOutcomes && course.learningOutcomes.length > 0 && (
-              <section className="bg-white rounded-2xl border border-slate-200/90 p-6 sm:p-8 shadow-xs space-y-4">
-                <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-                  What You Will Learn
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
-                  {course.learningOutcomes.map((outcome, idx) => (
-                    <div key={idx} className="flex items-start gap-2.5">
-                      <div className="text-emerald-500 mt-0.5 shrink-0">
-                        <CheckCircleIcon className="w-4 h-4" />
-                      </div>
-                      <span className="text-sm text-slate-700 leading-snug">
-                        {outcome}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Curriculum / Syllabus */}
+            {/* Lectures Section */}
             <section className="bg-white rounded-2xl border border-slate-200/90 p-6 sm:p-8 shadow-xs space-y-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-                    Course Syllabus
+                    Course Lectures ({lectures.length})
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Structured lessons provided by your backend
+                    Select any lecture to open the embedded video player
                   </p>
                 </div>
-                {course.totalLessons && (
-                  <span className="text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
-                    {course.totalLessons} Total Lessons
-                  </span>
-                )}
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={fetchCourseAndLectures}
+                  leftIcon={<RefreshIcon className="w-3.5 h-3.5" />}
+                >
+                  Refresh
+                </Button>
               </div>
 
-              {course.modules && course.modules.length > 0 ? (
-                <div className="space-y-3">
-                  {course.modules.map((mod, modIdx) => (
-                    <div
-                      key={mod.id || mod._id || modIdx}
-                      className="border border-slate-200 rounded-xl overflow-hidden"
-                    >
-                      <div className="bg-slate-50 px-4 py-3 flex items-center justify-between text-sm font-semibold text-slate-800">
-                        <span>
-                          Module {modIdx + 1}: {mod.title}
-                        </span>
-                        <span className="text-xs text-slate-500 font-normal">
-                          {mod.lessons.length} lessons
-                        </span>
-                      </div>
-                      <div className="divide-y divide-slate-100 bg-white">
-                        {mod.lessons.map((lesson, lessonIdx) => (
-                          <div
-                            key={lesson.id || lesson._id || lessonIdx}
-                            className="px-4 py-3 flex items-center justify-between text-xs sm:text-sm text-slate-700 hover:bg-slate-50 transition-colors"
-                          >
-                            <div className="flex items-center gap-2.5">
-                              <VideoIcon className="w-4 h-4 text-slate-400" />
-                              <span>{lesson.title}</span>
-                              {lesson.isFreePreview && (
-                                <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">
-                                  Preview
-                                </span>
-                              )}
-                            </div>
-                            {lesson.duration && (
-                              <span className="text-xs text-slate-400 font-mono">
-                                {lesson.duration}
-                              </span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : course.syllabus && course.syllabus.length > 0 ? (
-                <div className="space-y-3">
-                  {course.syllabus.map((section, sIdx) => (
-                    <div
-                      key={sIdx}
-                      className="border border-slate-200 rounded-xl overflow-hidden"
-                    >
-                      <div className="bg-slate-50 px-4 py-3 font-semibold text-slate-800 text-sm">
-                        {section.title}
-                      </div>
-                      <div className="divide-y divide-slate-100 bg-white">
-                        {section.lessons.map((lesson, lIdx) => (
-                          <div
-                            key={lIdx}
-                            className="px-4 py-3 flex items-center justify-between text-xs sm:text-sm text-slate-700"
-                          >
-                            <div className="flex items-center gap-2">
-                              <VideoIcon className="w-4 h-4 text-slate-400" />
-                              <span>{lesson.title}</span>
-                            </div>
-                            {lesson.duration && (
-                              <span className="text-xs text-slate-400 font-mono">
-                                {lesson.duration}
-                              </span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              {lectures.length === 0 ? (
+                <EmptyState
+                  title="No Lectures Added Yet"
+                  description={`This course has no lectures attached in the backend at ${API_BASE_URL}/courses/${courseId}/lectures. You can add lectures from the Admin Lecture Management page.`}
+                  actionText="Admin: Add Lecture"
+                  actionHref={`/admin/lectures?courseId=${courseId}`}
+                />
               ) : (
-                <div className="text-center py-8 px-4 rounded-xl bg-slate-50 text-slate-500 text-sm">
-                  Detailed lesson breakdown will be populated by the backend API.
+                <div className="space-y-3">
+                  {lectures.map((lecture, index) => {
+                    const lectureId = lecture._id || lecture.id;
+                    return (
+                      <Link
+                        key={lectureId}
+                        href={`/courses/${courseId}/lectures/${lectureId}`}
+                        className="group flex items-start justify-between gap-4 p-4 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/40 transition-all"
+                      >
+                        <div className="flex items-start gap-3.5 min-w-0">
+                          <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                            {index + 1}
+                          </div>
+                          <div className="space-y-1 min-w-0">
+                            <h3 className="text-sm font-semibold text-slate-900 group-hover:text-blue-600 transition-colors truncate">
+                              {lecture.title}
+                            </h3>
+                            <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                              {lecture.description}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-blue-600 mt-1">
+                          <span>Watch</span>
+                          <ArrowRightIcon className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                        </div>
+                      </Link>
+                    );
+                  })}
                 </div>
               )}
             </section>
-
-            {/* Instructor Details */}
-            <section className="bg-white rounded-2xl border border-slate-200/90 p-6 sm:p-8 shadow-xs space-y-4">
-              <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-                About the Instructor
-              </h2>
-              <div className="flex items-start gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-700 to-indigo-600 text-white flex items-center justify-center font-bold text-xl shadow-md shrink-0">
-                  {instructorName.charAt(0)}
-                </div>
-                <div className="space-y-1">
-                  <h3 className="text-base font-bold text-slate-900">
-                    {instructorName}
-                  </h3>
-                  <p className="text-xs text-blue-600 font-medium">
-                    {instructorTitle}
-                  </p>
-                  <p className="text-xs sm:text-sm text-slate-500 pt-1 leading-relaxed">
-                    {typeof course.instructor === 'object' && course.instructor?.bio
-                      ? course.instructor.bio
-                      : 'Specialist practitioner and faculty member at DataPollex Ltd., dedicated to mentoring engineers and technology leaders.'}
-                  </p>
-                </div>
-              </div>
-            </section>
           </div>
 
-          {/* Right Column: Sticky Enrollment Sidebar Card */}
-          <div className="lg:col-span-4">
-            <div className="sticky top-24 bg-white rounded-2xl border border-slate-200/90 p-6 shadow-lg shadow-slate-200/50 space-y-6">
-              {/* Price Display */}
-              <div className="space-y-1">
-                <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  Course Enrollment
+          {/* Right Column: Course Info Panel */}
+          <div className="lg:col-span-4 space-y-6">
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-sm space-y-5">
+              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                Course Summary
+              </h3>
+
+              <div className="space-y-3 text-sm divide-y divide-slate-100">
+                <div className="flex items-center justify-between pt-2">
+                  <span className="text-slate-500 text-xs">Total Lectures</span>
+                  <span className="font-semibold text-slate-900">
+                    {lectures.length}
+                  </span>
                 </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-extrabold text-slate-900">
+
+                <div className="flex items-center justify-between pt-3">
+                  <span className="text-slate-500 text-xs">Course Price</span>
+                  <span className="font-bold text-slate-900">
                     {formattedPrice}
                   </span>
-                  {course.originalPrice && (
-                    <span className="text-base text-slate-400 line-through">
-                      ${course.originalPrice.toFixed(2)}
-                    </span>
-                  )}
+                </div>
+
+                <div className="flex items-center justify-between pt-3">
+                  <span className="text-slate-500 text-xs">Backend Resource</span>
+                  <span className="font-mono text-xs text-blue-600 truncate max-w-[150px]">
+                    /api/courses/{courseId}
+                  </span>
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="space-y-2.5">
-                {enrolled ? (
-                  <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium text-center flex items-center justify-center gap-2">
-                    <CheckCircleIcon className="w-4 h-4 text-emerald-600" />
-                    Enrolled Successfully!
-                  </div>
-                ) : (
-                  <Button
-                    onClick={() => setEnrolled(true)}
-                    variant="primary"
-                    size="lg"
-                    fullWidth
-                    rightIcon={<ArrowRightIcon className="w-4 h-4" />}
-                  >
-                    Enroll Now
-                  </Button>
-                )}
+              {firstLecture ? (
+                <Link
+                  href={`/courses/${courseId}/lectures/${firstLecture._id || firstLecture.id}`}
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors shadow-xs"
+                >
+                  <VideoIcon className="w-4 h-4" />
+                  Watch First Lecture
+                </Link>
+              ) : (
                 <Link
                   href="/courses"
-                  className="block text-center text-xs font-medium text-slate-500 hover:text-slate-800 py-1 transition-colors"
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 text-sm font-medium transition-colors"
                 >
-                  Explore other courses
+                  ← Browse Other Courses
                 </Link>
-              </div>
+              )}
+            </div>
 
-              {/* Guarantee Checklist */}
-              <div className="pt-4 border-t border-slate-100 space-y-3">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-900">
-                  This Course Includes:
-                </h4>
-                <ul className="space-y-2.5 text-xs text-slate-600">
-                  <li className="flex items-center gap-2">
-                    <VideoIcon className="w-4 h-4 text-blue-600" />
-                    <span>Comprehensive video modules</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <AwardIcon className="w-4 h-4 text-blue-600" />
-                    <span>DataPollex Certificate of Completion</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <ShieldCheckIcon className="w-4 h-4 text-blue-600" />
-                    <span>Lifetime access to course materials</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <GraduationCapIcon className="w-4 h-4 text-blue-600" />
-                    <span>Real-world recruitment projects</span>
-                  </li>
-                </ul>
-              </div>
+            <div className="p-4 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-600 space-y-1">
+              <p className="font-semibold text-slate-800">Direct Public Access</p>
+              <p>
+                All course lectures are directly accessible for viewing without any
+                student registration or enrollment restrictions.
+              </p>
             </div>
           </div>
         </div>

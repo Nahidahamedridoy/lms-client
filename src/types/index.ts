@@ -1,103 +1,71 @@
 /**
- * DataPollex Ltd. LMS - TypeScript Definitions
+ * DataPollex Ltd. Simplified LMS - TypeScript Definitions
+ * Matched strictly with Node.js/Express backend MongoDB models
  */
 
-export type CourseLevel = 'Beginner' | 'Intermediate' | 'Advanced' | 'All Levels';
-
-export interface Lesson {
-  id?: string;
-  _id?: string;
-  title: string;
-  duration?: string;
-  videoUrl?: string;
-  isFreePreview?: boolean;
-  order?: number;
-}
-
-export interface Module {
-  id?: string;
-  _id?: string;
-  title: string;
-  description?: string;
-  lessons: Lesson[];
-}
-
-export interface Instructor {
-  id?: string;
-  _id?: string;
-  name: string;
-  title?: string;
-  avatar?: string;
-  bio?: string;
-}
-
 export interface Course {
+  _id: string;
   id?: string;
-  _id?: string;
   title: string;
-  slug?: string;
   description: string;
-  shortDescription?: string;
-  category: string;
-  level: CourseLevel;
   price: number;
-  originalPrice?: number;
-  thumbnail?: string;
-  instructor?: Instructor | string;
-  duration?: string;
-  totalLessons?: number;
-  modules?: Module[];
-  syllabus?: Array<{
-    title: string;
-    lessons: Lesson[];
-  }>;
-  learningOutcomes?: string[];
-  prerequisites?: string[];
-  isFeatured?: boolean;
-  status?: 'draft' | 'published' | 'archived';
-  enrolledCount?: number;
-  rating?: number;
-  reviewsCount?: number;
+  thumbnail: string;
   createdAt?: string;
   updatedAt?: string;
 }
 
-export interface User {
+export interface Lecture {
+  _id: string;
   id?: string;
+  title: string;
+  description: string;
+  videoUrl: string;
+  course: string; // Course ObjectId reference
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AdminUser {
   _id?: string;
-  name: string;
+  id?: string;
+  username: string;
   email: string;
-  role: 'student' | 'admin' | 'instructor';
-  avatar?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AuthResponse {
+  success: boolean;
+  message?: string;
   token: string;
-  user: User;
+  admin: AdminUser;
+  data?: {
+    token: string;
+    admin: AdminUser;
+  };
 }
 
-export interface CourseFilters {
-  search?: string;
-  category?: string;
-  level?: string;
-  page?: number;
-  limit?: number;
-  sortBy?: string;
+export interface ApiResponse<T> {
+  success: boolean;
+  message?: string;
+  data?: T;
+  count?: number;
+}
+
+export interface CourseFormData {
+  title: string;
+  description: string;
+  price: number;
+  thumbnail: string;
+}
+
+export interface LectureFormData {
+  title: string;
+  description: string;
+  videoUrl: string;
 }
 
 export interface AdminStats {
   totalCourses: number;
-  totalStudents: number;
-  totalEnrollments: number;
-  activeCourses: number;
-}
-
-export interface ApiResponse<T> {
-  success?: boolean;
-  data?: T;
-  message?: string;
-  error?: string;
-  courses?: T; // For backends returning { courses: [...] } directly
-  stats?: AdminStats;
-  total?: number;
+  totalLectures: number;
 }

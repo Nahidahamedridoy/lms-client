@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { loginAdmin, API_BASE_URL } from '@/lib/api';
+import { loginAdmin, getStoredToken, API_BASE_URL } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
@@ -16,16 +16,23 @@ import {
 export default function AdminLoginPage() {
   const router = useRouter();
 
-  const [email, setEmail] = useState('admin@datapollex.com');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('admin@example.com');
+  const [password, setPassword] = useState('admin123456');
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  useEffect(() => {
+    // If already authenticated, redirect straight to dashboard
+    if (getStoredToken()) {
+      router.replace('/admin/dashboard');
+    }
+  }, [router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      setErrorMessage('Please enter both email and password.');
+      setErrorMessage('Please enter both admin email and password.');
       return;
     }
 
@@ -39,7 +46,7 @@ export default function AdminLoginPage() {
       const msg =
         err instanceof Error
           ? err.message
-          : 'Failed to authenticate with backend server.';
+          : 'Authentication failed. Please verify server status and credentials.';
       setErrorMessage(msg);
     } finally {
       setIsLoading(false);
@@ -48,10 +55,8 @@ export default function AdminLoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-blue-950 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Background Decorative Rings */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Main Container */}
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 space-y-6">
         {/* Brand Header */}
         <div className="text-center space-y-2">
@@ -80,7 +85,7 @@ export default function AdminLoginPage() {
             Admin Sign In
           </h2>
           <p className="text-xs text-slate-400">
-            Authenticate to manage courses, view metrics, and oversee the platform
+            Authenticate with JWT credentials to manage courses and lectures
           </p>
         </div>
 
@@ -99,7 +104,7 @@ export default function AdminLoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@datapollex.com"
+              placeholder="admin@example.com"
               required
               autoComplete="email"
             />
@@ -125,8 +130,8 @@ export default function AdminLoginPage() {
                 Remember this session
               </label>
 
-              <span className="text-slate-400 hover:text-slate-600 cursor-pointer">
-                Forgot password?
+              <span className="text-slate-400">
+                JWT Protected
               </span>
             </div>
 
@@ -144,18 +149,20 @@ export default function AdminLoginPage() {
             </div>
           </form>
 
-          {/* Recruiter / Evaluator Quick Note */}
+          {/* Evaluator Quick Note */}
           <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-600 space-y-1.5">
             <div className="flex items-center gap-1.5 font-semibold text-slate-800">
               <ShieldCheckIcon className="w-4 h-4 text-blue-600" />
-              <span>Assessment Evaluation Details</span>
+              <span>Backend Authentication Route</span>
             </div>
             <p className="text-slate-500 leading-relaxed">
-              API endpoint configured:{' '}
+              Endpoint:{' '}
               <code className="font-mono text-blue-600 font-medium">
                 {API_BASE_URL}/auth/login
               </code>
-              . Pre-filled with standard test credentials.
+              . Pre-filled with backend seed credentials (
+              <code className="font-mono">admin@example.com</code> /{' '}
+              <code className="font-mono">admin123456</code>).
             </p>
           </div>
 

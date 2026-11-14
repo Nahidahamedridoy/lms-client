@@ -7,13 +7,12 @@ import {
   GraduationCapIcon,
   LayoutDashboardIcon,
   BookOpenIcon,
-  UsersIcon,
-  BarChartIcon,
+  VideoIcon,
   LogOutIcon,
   ArrowRightIcon,
   XIcon,
 } from '@/components/ui/icons';
-import { clearStoredAuth, getStoredUser } from '@/lib/api';
+import { clearStoredAuth, getStoredAdmin } from '@/lib/api';
 
 export interface AdminSidebarProps {
   isOpen?: boolean;
@@ -26,7 +25,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 }) => {
   const pathname = usePathname();
   const router = useRouter();
-  const user = getStoredUser();
+  const admin = getStoredAdmin();
 
   const handleLogout = () => {
     clearStoredAuth();
@@ -47,16 +46,10 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       active: pathname.startsWith('/admin/courses'),
     },
     {
-      label: 'Students',
-      href: '/admin/students',
-      icon: <UsersIcon className="w-5 h-5" />,
-      active: pathname.startsWith('/admin/students'),
-    },
-    {
-      label: 'Analytics',
-      href: '/admin/analytics',
-      icon: <BarChartIcon className="w-5 h-5" />,
-      active: pathname.startsWith('/admin/analytics'),
+      label: 'Lectures',
+      href: '/admin/lectures',
+      icon: <VideoIcon className="w-5 h-5" />,
+      active: pathname.startsWith('/admin/lectures'),
     },
   ];
 
@@ -94,7 +87,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       {/* Navigation Links */}
       <div className="flex-1 py-6 px-4 space-y-1.5 overflow-y-auto">
         <div className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-          Main Menu
+          Management
         </div>
         {navItems.map((item) => (
           <Link
@@ -115,7 +108,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         ))}
 
         <div className="pt-6 px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-          Shortcuts
+          Platform
         </div>
         <Link
           href="/"
@@ -133,21 +126,21 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       <div className="p-4 border-t border-slate-800 bg-slate-900/80">
         <div className="flex items-center gap-3 mb-3 px-2">
           <div className="w-9 h-9 rounded-full bg-blue-700 text-white flex items-center justify-center font-bold text-sm">
-            {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
+            {admin?.username ? admin.username.charAt(0).toUpperCase() : 'A'}
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold text-white truncate">
-              {user?.name || 'Administrator'}
+              {admin?.username || 'Administrator'}
             </p>
             <p className="text-[11px] text-slate-400 truncate">
-              {user?.email || 'admin@datapollex.com'}
+              {admin?.email || 'admin@example.com'}
             </p>
           </div>
         </div>
 
         <button
           onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-950/30 rounded-lg transition-colors border border-rose-900/40"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-950/30 rounded-lg transition-colors border border-rose-900/40 cursor-pointer"
         >
           <LogOutIcon className="w-3.5 h-3.5" />
           Sign Out of Admin
