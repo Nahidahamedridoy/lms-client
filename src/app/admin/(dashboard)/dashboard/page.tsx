@@ -31,7 +31,7 @@ export default function AdminDashboardPage() {
 
       // Compute total lectures across all courses
       const lecturePromises = fetchedCourses.map((c) =>
-        getLecturesByCourse(c._id || c.id).catch(() => [])
+        getLecturesByCourse(c._id || c.id || '').catch(() => [])
       );
       const allLecturesArrays = await Promise.all(lecturePromises);
       const totalCount = allLecturesArrays.reduce(
@@ -57,7 +57,7 @@ export default function AdminDashboardPage() {
         setCourses(fetchedCourses);
 
         const lecturePromises = fetchedCourses.map((c) =>
-          getLecturesByCourse(c._id || c.id).catch(() => [])
+          getLecturesByCourse(c._id || c.id || '').catch(() => [])
         );
         const allLecturesArrays = await Promise.all(lecturePromises);
         if (isMounted) {

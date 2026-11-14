@@ -14,8 +14,7 @@ import {
   AdminUser,
 } from '@/types';
 
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 const TOKEN_KEY = 'datapollex_lms_admin_token';
 const ADMIN_KEY = 'datapollex_lms_admin_user';
@@ -53,8 +52,92 @@ export const getStoredAdmin = (): AdminUser | null => {
   }
 };
 
+/**
+ * Checks JWT format and verifies client-side expiration
+ */
+export const isJwtValidFormat = (token: string): boolean => {
+  if (!token || typeof token !== 'string') return false;
+  const parts = token.split('.');
+  if (parts.length !== 3) return false;
+
+  try {
+    const payloadBase64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const decodedJson = JSON.parse(
+      typeof atob !== 'undefined'
+        ? atob(payloadBase64)
+        : Buffer.from(payloadBase64, 'base64').toString('binary')
+    );
+
+    // If expiration timestamp exists in token payload, verify it hasn't passed
+    if (decodedJson.exp && typeof decodedJson.exp === 'number') {
+      const nowInSeconds = Math.floor(Date.now() / 1000);
+      if (decodedJson.exp < nowInSeconds) {
+        return false;
+      }
+    }
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Verifies the JWT token directly against the backend authentication middleware.
+ * Protected backend routes reject invalid or expired tokens with HTTP 401.
+ */
+export const verifyTokenWithBackend = async (token: string): Promise<boolean> => {
+  if (!token || !isJwtValidFormat(token)) {
+    return false;
+  }
+
+  try {
+    // Probe a protected endpoint with the Bearer token
+    const res = await fetch(`${API_BASE_URL}/courses`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({}),
+    });
+
+    // HTTP 401 means the backend auth middleware rejected the token
+    if (res.status === 401) {
+      return false;
+    }
+
+    // HTTP 400 means token passed backend jwt.verify() and reached controller
+    // HTTP 200/201 also means authorized
+    return true;
+  } catch {
+    // If backend cannot be reached, fallback to strict client JWT format & expiration
+    return isJwtValidFormat(token);
+  }
+};
+
+/**
+ * Validates the admin session.
+ * If token is missing, expired, or invalid according to the backend, it clears storage and returns false.
+ */
+export const validateAdminSession = async (): Promise<boolean> => {
+  const token = getStoredToken();
+  if (!token) {
+    clearStoredAuth();
+    return false;
+  }
+
+  const isValid = await verifyTokenWithBackend(token);
+  if (!isValid) {
+    clearStoredAuth();
+    return false;
+  }
+
+  return true;
+};
+
 export const isAuthenticated = (): boolean => {
-  return !!getStoredToken();
+  const token = getStoredToken();
+  return !!token && isJwtValidFormat(token);
 };
 
 // -------------------------------------------------------------
@@ -85,10 +168,9 @@ async function request<T>(
 
     if (!response.ok) {
       if (response.status === 401 && typeof window !== 'undefined') {
-        // If unauthorized on a protected route, token is invalid or expired
         if (token && window.location.pathname.startsWith('/admin') && !window.location.pathname.includes('/login')) {
           clearStoredAuth();
-          window.location.href = '/admin/login?error=session_expired';
+          window.location.replace('/admin/login?error=session_expired');
         }
       }
 

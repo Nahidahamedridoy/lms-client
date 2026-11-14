@@ -59,7 +59,7 @@ export default function AdminLecturesPage() {
       const data = await getCourses();
       setCourses(data);
       if (!selectedCourseId && data.length > 0) {
-        const firstId = data[0]._id || data[0].id;
+        const firstId = data[0]._id || data[0].id || '';
         setSelectedCourseId(firstId);
         setTargetCourseId(firstId);
       }

@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { loginAdmin, getStoredToken, API_BASE_URL } from '@/lib/api';
+import { loginAdmin, API_BASE_URL } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
@@ -16,22 +16,15 @@ import {
 export default function AdminLoginPage() {
   const router = useRouter();
 
-  const [email, setEmail] = useState('admin@example.com');
-  const [password, setPassword] = useState('admin123456');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    // If already authenticated, redirect straight to dashboard
-    if (getStoredToken()) {
-      router.replace('/admin/dashboard');
-    }
-  }, [router]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
+    if (!email.trim() || !password.trim()) {
       setErrorMessage('Please enter both admin email and password.');
       return;
     }
@@ -40,17 +33,26 @@ export default function AdminLoginPage() {
     setErrorMessage(null);
 
     try {
-      await loginAdmin({ email, password });
+      await loginAdmin({
+        email: email.trim(),
+        password: password.trim(),
+      });
       router.push('/admin/dashboard');
     } catch (err: unknown) {
       const msg =
         err instanceof Error
           ? err.message
-          : 'Authentication failed. Please verify server status and credentials.';
+          : 'Authentication failed. Please verify credentials.';
       setErrorMessage(msg);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleFillCredentials = () => {
+    setEmail('admin@example.com');
+    setPassword('admin123456');
+    setErrorMessage(null);
   };
 
   return (
@@ -85,7 +87,7 @@ export default function AdminLoginPage() {
             Admin Sign In
           </h2>
           <p className="text-xs text-slate-400">
-            Authenticate with JWT credentials to manage courses and lectures
+            Sign in with administrative credentials to access protected routes
           </p>
         </div>
 
@@ -100,17 +102,17 @@ export default function AdminLoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
-              label="Admin Email"
+              label="Admin Email *"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@example.com"
+              placeholder="e.g. admin@example.com"
               required
               autoComplete="email"
             />
 
             <Input
-              label="Password"
+              label="Password *"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -127,12 +129,16 @@ export default function AdminLoginPage() {
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
-                Remember this session
+                Remember session
               </label>
 
-              <span className="text-slate-400">
-                JWT Protected
-              </span>
+              <button
+                type="button"
+                onClick={handleFillCredentials}
+                className="text-blue-600 hover:text-blue-800 font-medium underline underline-offset-2 cursor-pointer"
+              >
+                Use Seed Credentials
+              </button>
             </div>
 
             <div className="pt-2">
@@ -156,13 +162,12 @@ export default function AdminLoginPage() {
               <span>Backend Authentication Route</span>
             </div>
             <p className="text-slate-500 leading-relaxed">
-              Endpoint:{' '}
+              Target endpoint:{' '}
               <code className="font-mono text-blue-600 font-medium">
                 {API_BASE_URL}/auth/login
               </code>
-              . Pre-filled with backend seed credentials (
-              <code className="font-mono">admin@example.com</code> /{' '}
-              <code className="font-mono">admin123456</code>).
+              . Valid seed credentials: <code className="font-mono">admin@example.com</code> /{' '}
+              <code className="font-mono">admin123456</code>.
             </p>
           </div>
 
