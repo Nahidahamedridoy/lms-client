@@ -17,15 +17,15 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({
 }) => {
   return (
     <div
-      className={`rounded-xl border border-rose-200 bg-rose-50/70 p-5 text-rose-900 shadow-xs ${className}`}
+      className={`rounded-2xl border border-rose-200 bg-rose-50/80 p-5 text-rose-900 shadow-xs ${className}`}
     >
       <div className="flex items-start gap-3.5">
-        <div className="text-rose-600 mt-0.5 shrink-0">
+        <div className="w-9 h-9 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
           <AlertCircleIcon className="w-5 h-5" />
         </div>
         <div className="flex-1 min-w-0">
-          <h4 className="text-sm font-semibold text-rose-900 mb-1">{title}</h4>
-          <p className="text-sm text-rose-700 leading-relaxed break-words">{message}</p>
+          <h4 className="text-sm font-bold text-rose-950 mb-0.5">{title}</h4>
+          <p className="text-xs sm:text-sm text-rose-800 leading-relaxed break-words">{message}</p>
           {onRetry && (
             <div className="mt-3">
               <Button

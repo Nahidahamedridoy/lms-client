@@ -11,6 +11,7 @@ import {
   API_BASE_URL,
 } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
@@ -21,7 +22,10 @@ import {
   SearchIcon,
   ArrowRightIcon,
   VideoIcon,
+  EditIcon,
+  TrashIcon,
   XIcon,
+  AlertCircleIcon,
 } from '@/components/ui/icons';
 
 export default function AdminCoursesPage() {
@@ -176,11 +180,16 @@ export default function AdminCoursesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-            Course Management
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Full CRUD management for LMS courses synchronized with {API_BASE_URL}/courses
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-extrabold text-[#14213D] tracking-tight">
+              Course Management
+            </h2>
+            <Badge variant="navy" size="sm">
+              {courses.length} {courses.length === 1 ? 'Course' : 'Courses'}
+            </Badge>
+          </div>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            Create, edit, and organize LMS courses directly synchronized with MongoDB backend ({API_BASE_URL}/courses)
           </p>
         </div>
 
@@ -215,62 +224,70 @@ export default function AdminCoursesPage() {
       )}
 
       {/* Filter / Search Bar */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div className="relative w-full sm:w-80">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="relative w-full sm:w-88">
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
             <SearchIcon className="w-4 h-4" />
           </div>
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search courses..."
-            className="block w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-4 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            placeholder="Search by title or description..."
+            className="block w-full rounded-xl border border-slate-200 bg-slate-50/80 pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
           />
         </div>
 
-        <div className="text-xs text-slate-500">
-          Showing <strong>{filteredCourses.length}</strong> of{' '}
-          <strong>{courses.length}</strong> courses
+        <div className="text-xs font-medium text-slate-500 flex items-center gap-2">
+          <span>Showing <strong className="text-slate-800">{filteredCourses.length}</strong> of <strong className="text-slate-800">{courses.length}</strong> courses</span>
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="text-xs text-blue-600 hover:text-blue-800 font-semibold cursor-pointer"
+            >
+              Clear
+            </button>
+          )}
         </div>
       </div>
 
       {/* Courses Table / Empty State */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
         {isLoading ? (
           <div className="p-8 space-y-4">
             <div className="h-6 bg-slate-100 rounded w-1/3 animate-pulse" />
-            <div className="h-10 bg-slate-100 rounded animate-pulse" />
-            <div className="h-10 bg-slate-100 rounded animate-pulse" />
+            <div className="h-12 bg-slate-100 rounded-xl animate-pulse" />
+            <div className="h-12 bg-slate-100 rounded-xl animate-pulse" />
+            <div className="h-12 bg-slate-100 rounded-xl animate-pulse" />
           </div>
         ) : filteredCourses.length === 0 ? (
           <div className="p-8">
             <EmptyState
-              title={search ? 'No Matches Found' : 'No Courses Created Yet'}
+              title={search ? 'No Matching Courses' : 'No Courses Created Yet'}
               description={
                 search
-                  ? `No course matches "${search}".`
-                  : `There are currently no courses in the database. Use "+ Add New Course" to create the first course.`
+                  ? `No course matches "${search}". Try searching with a different keyword or reset the filter.`
+                  : `There are currently no courses in the database. Click "+ Add New Course" above to create the very first course.`
               }
-              actionText={search ? 'Clear Search' : 'Create Course'}
+              actionText={search ? 'Clear Search' : 'Create First Course'}
               onAction={search ? () => setSearch('') : openCreateModal}
             />
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-slate-600">
-              <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500 border-b border-slate-200 font-semibold">
+              <thead className="bg-slate-50/90 text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200 font-bold">
                 <tr>
-                  <th scope="col" className="px-6 py-3.5">
-                    Course
+                  <th scope="col" className="px-6 py-4">
+                    Course Overview
                   </th>
-                  <th scope="col" className="px-6 py-3.5">
+                  <th scope="col" className="px-6 py-4">
                     Price
                   </th>
-                  <th scope="col" className="px-6 py-3.5">
+                  <th scope="col" className="px-6 py-4">
                     Thumbnail
                   </th>
-                  <th scope="col" className="px-6 py-3.5 text-right">
+                  <th scope="col" className="px-6 py-4 text-right">
                     Actions
                   </th>
                 </tr>
@@ -278,71 +295,88 @@ export default function AdminCoursesPage() {
               <tbody className="divide-y divide-slate-100 font-medium">
                 {filteredCourses.map((course) => {
                   const id = course._id || course.id;
+                  const isFree = course.price === 0 || !course.price;
                   return (
-                    <tr key={id} className="hover:bg-slate-50/80 transition-colors">
+                    <tr key={id} className="hover:bg-slate-50/70 transition-colors group">
                       <td className="px-6 py-4">
-                        <div className="font-semibold text-slate-900 line-clamp-1 max-w-sm">
+                        <div className="font-bold text-[#14213D] text-sm group-hover:text-blue-600 transition-colors line-clamp-1 max-w-md">
                           {course.title}
                         </div>
-                        <div className="text-xs text-slate-400 line-clamp-1 max-w-sm mt-0.5">
+                        <div className="text-xs text-slate-500 line-clamp-1 max-w-md mt-0.5">
                           {course.description}
                         </div>
-                        <div className="text-[10px] font-mono text-slate-400 mt-1">
-                          ID: {id}
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                            ID: {id}
+                          </span>
                         </div>
-                      </td>
-
-                      <td className="px-6 py-4 font-semibold text-slate-900">
-                        {course.price === 0 || !course.price
-                          ? 'Free'
-                          : `$${Number(course.price).toFixed(2)}`}
                       </td>
 
                       <td className="px-6 py-4">
-                        <div className="w-14 h-10 rounded-lg overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center">
+                        {isFree ? (
+                          <Badge variant="emerald" size="sm">
+                            Free
+                          </Badge>
+                        ) : (
+                          <Badge variant="navy" size="sm">
+                            ${Number(course.price).toFixed(2)}
+                          </Badge>
+                        )}
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <div className="w-16 h-11 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shadow-2xs flex items-center justify-center shrink-0">
                           {course.thumbnail ? (
                             /* eslint-disable-next-line @next/next/no-img-element */
                             <img
                               src={course.thumbnail}
                               alt={course.title}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             />
                           ) : (
-                            <BookOpenIcon className="w-4 h-4 text-slate-400" />
+                            <BookOpenIcon className="w-5 h-5 text-slate-400" />
                           )}
                         </div>
                       </td>
 
-                      <td className="px-6 py-4 text-right space-x-2">
-                        <Link
-                          href={`/admin/lectures?courseId=${id}`}
-                          className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
-                        >
-                          <VideoIcon className="w-3 h-3" />
-                          Lectures
-                        </Link>
+                      <td className="px-6 py-4 text-right">
+                        <div className="inline-flex items-center justify-end gap-1.5">
+                          <Link
+                            href={`/admin/lectures?courseId=${id}`}
+                            className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                            title="Manage Course Lectures"
+                          >
+                            <VideoIcon className="w-3.5 h-3.5 text-blue-600" />
+                            Lectures
+                          </Link>
 
-                        <button
-                          onClick={() => openEditModal(course)}
-                          className="text-xs font-semibold text-slate-700 hover:text-blue-600 px-2 py-1 rounded hover:bg-slate-100 transition-colors"
-                        >
-                          Edit
-                        </button>
+                          <button
+                            onClick={() => openEditModal(course)}
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-blue-600 px-2.5 py-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+                            title="Edit Course"
+                          >
+                            <EditIcon className="w-3.5 h-3.5" />
+                            Edit
+                          </button>
 
-                        <button
-                          onClick={() => setDeletingCourse(course)}
-                          className="text-xs font-semibold text-rose-600 hover:text-rose-800 px-2 py-1 rounded hover:bg-rose-50 transition-colors"
-                        >
-                          Delete
-                        </button>
+                          <button
+                            onClick={() => setDeletingCourse(course)}
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 hover:text-rose-800 px-2.5 py-1.5 rounded-xl hover:bg-rose-50 transition-colors cursor-pointer"
+                            title="Delete Course"
+                          >
+                            <TrashIcon className="w-3.5 h-3.5" />
+                            Delete
+                          </button>
 
-                        <Link
-                          href={`/courses/${id}`}
-                          className="inline-flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-slate-600 pl-1"
-                        >
-                          View Live
-                          <ArrowRightIcon className="w-3 h-3" />
-                        </Link>
+                          <Link
+                            href={`/courses/${id}`}
+                            target="_blank"
+                            className="inline-flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-slate-700 px-2 py-1.5 rounded-xl hover:bg-slate-100 transition-colors"
+                            title="Preview on Public Student Catalog"
+                          >
+                            <ArrowRightIcon className="w-3.5 h-3.5" />
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -355,15 +389,25 @@ export default function AdminCoursesPage() {
 
       {/* CREATE COURSE MODAL */}
       {isCreateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="text-lg font-bold text-slate-900">
-                Create New Course
-              </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-6 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                  <BookOpenIcon className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-extrabold text-[#14213D] tracking-tight">
+                    Create New Course
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Add a new course curriculum to the LMS catalog
+                  </p>
+                </div>
+              </div>
               <button
                 onClick={() => setIsCreateOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <XIcon className="w-5 h-5" />
               </button>
@@ -381,12 +425,12 @@ export default function AdminCoursesPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, title: e.target.value })
                 }
-                placeholder="e.g. Master Modern Web Development"
+                placeholder="e.g. Master Modern Full-Stack Development"
                 required
               />
 
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-slate-700">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
                   Course Description *
                 </label>
                 <textarea
@@ -395,15 +439,15 @@ export default function AdminCoursesPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
                   }
-                  placeholder="Provide an overview of the curriculum and objectives..."
-                  className="block w-full rounded-lg border border-slate-300 p-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+                  placeholder="Provide an overview of the curriculum, outcomes, and prerequisites..."
+                  className="block w-full rounded-xl border border-slate-200 bg-white p-3.5 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
                   required
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
-                  label="Price ($) *"
+                  label="Price ($ USD) *"
                   type="number"
                   step="0.01"
                   min="0"
@@ -429,7 +473,27 @@ export default function AdminCoursesPage() {
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3">
+              {/* Live Thumbnail Preview */}
+              {formData.thumbnail && (
+                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    Live Thumbnail Preview:
+                  </span>
+                  <div className="aspect-video w-full max-h-36 rounded-xl overflow-hidden bg-slate-200 border border-slate-300">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={formData.thumbnail}
+                      alt="Thumbnail preview"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
                 <Button
                   type="button"
                   variant="outline"
@@ -453,15 +517,25 @@ export default function AdminCoursesPage() {
 
       {/* EDIT COURSE MODAL */}
       {editingCourse && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="text-lg font-bold text-slate-900">
-                Edit Course
-              </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-6 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                  <EditIcon className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-extrabold text-[#14213D] tracking-tight">
+                    Edit Course
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Update details for {editingCourse.title}
+                  </p>
+                </div>
+              </div>
               <button
                 onClick={() => setEditingCourse(null)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <XIcon className="w-5 h-5" />
               </button>
@@ -483,7 +557,7 @@ export default function AdminCoursesPage() {
               />
 
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-slate-700">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
                   Course Description *
                 </label>
                 <textarea
@@ -492,14 +566,14 @@ export default function AdminCoursesPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
                   }
-                  className="block w-full rounded-lg border border-slate-300 p-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+                  className="block w-full rounded-xl border border-slate-200 bg-white p-3.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
                   required
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
-                  label="Price ($) *"
+                  label="Price ($ USD) *"
                   type="number"
                   step="0.01"
                   min="0"
@@ -524,7 +598,27 @@ export default function AdminCoursesPage() {
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3">
+              {/* Live Thumbnail Preview */}
+              {formData.thumbnail && (
+                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    Thumbnail Preview:
+                  </span>
+                  <div className="aspect-video w-full max-h-36 rounded-xl overflow-hidden bg-slate-200 border border-slate-300">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={formData.thumbnail}
+                      alt="Thumbnail preview"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
                 <Button
                   type="button"
                   variant="outline"
@@ -548,19 +642,24 @@ export default function AdminCoursesPage() {
 
       {/* DELETE CONFIRMATION MODAL */}
       {deletingCourse && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
-            <h3 className="text-lg font-bold text-slate-900">
-              Confirm Delete
-            </h3>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              Are you sure you want to delete course &quot;
-              <strong className="text-slate-800">{deletingCourse.title}</strong>
-              &quot;? This will permanently remove the course and its record from
-              the database.
-            </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+            <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+              <AlertCircleIcon className="w-6 h-6" />
+            </div>
 
-            <div className="flex items-center justify-end gap-3 pt-3">
+            <div className="text-center space-y-2">
+              <h3 className="text-lg font-bold text-slate-900">
+                Confirm Course Deletion
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Are you sure you want to permanently delete course &quot;
+                <strong className="text-slate-900">{deletingCourse.title}</strong>
+                &quot;? This action cannot be undone and will delete the record from the MongoDB database.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-center gap-3 pt-2">
               <Button
                 type="button"
                 variant="outline"

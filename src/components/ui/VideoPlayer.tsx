@@ -8,9 +8,6 @@ export interface VideoPlayerProps {
   title: string;
 }
 
-/**
- * Transforms standard video URLs (YouTube, Vimeo, direct MP4) into embeddable URLs
- */
 export function getEmbedUrl(url: string): { type: 'iframe' | 'video' | 'invalid'; src: string } {
   if (!url || typeof url !== 'string') {
     return { type: 'invalid', src: '' };
@@ -44,7 +41,7 @@ export function getEmbedUrl(url: string): { type: 'iframe' | 'video' | 'invalid'
     };
   }
 
-  // If already an embed or HTTPS URL, attempt iframe
+  // Generic HTTP/HTTPS URL iframe attempt
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
     return {
       type: 'iframe',
@@ -60,23 +57,25 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoUrl, title }) => 
 
   if (type === 'invalid' || !src) {
     return (
-      <div className="w-full aspect-video bg-slate-900 rounded-2xl flex flex-col items-center justify-center p-6 text-slate-400 border border-slate-800">
-        <VideoIcon className="w-12 h-12 text-slate-600 mb-3" />
-        <h4 className="text-sm font-semibold text-slate-200 mb-1">
+      <div className="w-full aspect-video bg-[#14213D] rounded-3xl flex flex-col items-center justify-center p-8 text-slate-400 border border-slate-800 shadow-xl">
+        <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 text-amber-400">
+          <VideoIcon className="w-8 h-8" />
+        </div>
+        <h4 className="text-base font-bold text-white mb-1">
           Video Player Unavailable
         </h4>
-        <p className="text-xs text-slate-400 text-center max-w-sm">
-          The video URL for &quot;{title}&quot; is empty or in an unsupported format.
+        <p className="text-xs text-slate-400 text-center max-w-sm leading-relaxed">
+          The video stream for &quot;{title}&quot; is currently unavailable or invalid.
         </p>
-        <span className="mt-3 font-mono text-[11px] text-slate-500 bg-slate-800 px-2 py-1 rounded">
-          {videoUrl || 'No URL specified'}
+        <span className="mt-3 font-mono text-[11px] text-slate-400 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-700/60">
+          {videoUrl || 'No video URL specified'}
         </span>
       </div>
     );
   }
 
   return (
-    <div className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border border-slate-800">
+    <div className="relative w-full aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl border border-slate-800/80 ring-1 ring-white/10">
       {type === 'video' ? (
         <video
           controls

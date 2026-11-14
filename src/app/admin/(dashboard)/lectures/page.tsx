@@ -13,6 +13,7 @@ import {
   API_BASE_URL,
 } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
@@ -22,7 +23,10 @@ import {
   RefreshIcon,
   BookOpenIcon,
   ArrowRightIcon,
+  EditIcon,
+  TrashIcon,
   XIcon,
+  AlertCircleIcon,
 } from '@/components/ui/icons';
 
 export default function AdminLecturesPage() {
@@ -230,11 +234,16 @@ export default function AdminLecturesPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-            Lecture Management
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Create, update, and organize course lectures synchronized with {API_BASE_URL}
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-extrabold text-[#14213D] tracking-tight">
+              Lecture Management
+            </h2>
+            <Badge variant="royal" size="sm">
+              {lectures.length} {lectures.length === 1 ? 'Lecture' : 'Lectures'}
+            </Badge>
+          </div>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            Create, update, and sequence course video lectures synchronized with {API_BASE_URL}
           </p>
         </div>
 
@@ -276,17 +285,19 @@ export default function AdminLecturesPage() {
       )}
 
       {/* Course Selector Bar */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <BookOpenIcon className="w-5 h-5 text-blue-600 shrink-0" />
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+            <BookOpenIcon className="w-5 h-5" />
+          </div>
           <div className="min-w-0 flex-1 sm:flex-initial">
-            <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
-              Select Course to Manage Lectures:
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+              Select Target Course:
             </label>
             <select
               value={selectedCourseId}
               onChange={(e) => handleCourseChange(e.target.value)}
-              className="block w-full sm:w-80 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              className="block w-full sm:w-88 rounded-xl border border-slate-200 bg-slate-50/80 px-3.5 py-2.5 text-xs font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 cursor-pointer transition-all"
             >
               {courses.length === 0 ? (
                 <option value="">No courses created yet</option>
@@ -302,24 +313,28 @@ export default function AdminLecturesPage() {
         </div>
 
         {activeCourse && (
-          <div className="text-xs text-slate-500 flex items-center gap-2">
-            <span>
-              Total in Course: <strong>{lectures.length}</strong>
+          <div className="text-xs font-medium text-slate-500 flex items-center gap-3">
+            <span className="flex items-center gap-1.5">
+              <span>Lectures in course:</span>
+              <strong className="text-slate-800 bg-slate-100 px-2 py-0.5 rounded-lg">
+                {lectures.length}
+              </strong>
             </span>
-            <span>•</span>
+            <span className="text-slate-300">•</span>
             <Link
               href={`/courses/${selectedCourseId}`}
-              className="text-blue-600 hover:text-blue-800 font-semibold inline-flex items-center gap-1"
+              target="_blank"
+              className="text-blue-600 hover:text-blue-800 font-bold inline-flex items-center gap-1 transition-colors"
             >
-              View Public Page
-              <ArrowRightIcon className="w-3 h-3" />
+              Preview Public Course
+              <ArrowRightIcon className="w-3.5 h-3.5" />
             </Link>
           </div>
         )}
       </div>
 
       {/* Lectures Table / Empty State */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
         {courses.length === 0 ? (
           <div className="p-8">
             <EmptyState
@@ -332,14 +347,14 @@ export default function AdminLecturesPage() {
         ) : isLoading ? (
           <div className="p-8 space-y-4">
             <div className="h-6 bg-slate-100 rounded w-1/4 animate-pulse" />
-            <div className="h-10 bg-slate-100 rounded animate-pulse" />
-            <div className="h-10 bg-slate-100 rounded animate-pulse" />
+            <div className="h-12 bg-slate-100 rounded-xl animate-pulse" />
+            <div className="h-12 bg-slate-100 rounded-xl animate-pulse" />
           </div>
         ) : lectures.length === 0 ? (
           <div className="p-8">
             <EmptyState
-              title="No Lectures Added for this Course"
-              description={`The course "${activeCourse?.title || ''}" currently has no lectures in the backend database. Click below to add the first lecture.`}
+              title="No Lectures in Selected Course"
+              description={`The course "${activeCourse?.title || ''}" currently has no lectures registered in the database. Add the first lecture below.`}
               actionText="Add First Lecture"
               onAction={openCreateModal}
             />
@@ -347,18 +362,18 @@ export default function AdminLecturesPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-slate-600">
-              <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500 border-b border-slate-200 font-semibold">
+              <thead className="bg-slate-50/90 text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200 font-bold">
                 <tr>
-                  <th scope="col" className="px-6 py-3.5">
-                    Order
+                  <th scope="col" className="px-6 py-4">
+                    #
                   </th>
-                  <th scope="col" className="px-6 py-3.5">
-                    Lecture Title & Details
+                  <th scope="col" className="px-6 py-4">
+                    Lecture Title & Overview
                   </th>
-                  <th scope="col" className="px-6 py-3.5">
-                    Video URL
+                  <th scope="col" className="px-6 py-4">
+                    Video Stream URL
                   </th>
-                  <th scope="col" className="px-6 py-3.5 text-right">
+                  <th scope="col" className="px-6 py-4 text-right">
                     Actions
                   </th>
                 </tr>
@@ -367,53 +382,64 @@ export default function AdminLecturesPage() {
                 {lectures.map((lec, index) => {
                   const id = lec._id || lec.id;
                   return (
-                    <tr key={id} className="hover:bg-slate-50/80 transition-colors">
+                    <tr key={id} className="hover:bg-slate-50/70 transition-colors group">
                       <td className="px-6 py-4">
-                        <span className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center">
+                        <span className="w-7 h-7 rounded-xl bg-blue-50 text-blue-700 font-extrabold text-xs flex items-center justify-center border border-blue-100">
                           {index + 1}
                         </span>
                       </td>
 
                       <td className="px-6 py-4">
-                        <div className="font-semibold text-slate-900 line-clamp-1 max-w-sm">
+                        <div className="font-bold text-[#14213D] text-sm group-hover:text-blue-600 transition-colors line-clamp-1 max-w-sm">
                           {lec.title}
                         </div>
-                        <div className="text-xs text-slate-400 line-clamp-2 max-w-sm mt-0.5">
+                        <div className="text-xs text-slate-500 line-clamp-2 max-w-sm mt-0.5">
                           {lec.description}
                         </div>
-                        <div className="text-[10px] font-mono text-slate-400 mt-1">
+                        <div className="text-[10px] font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded inline-block mt-1">
                           ID: {id}
                         </div>
                       </td>
 
                       <td className="px-6 py-4">
-                        <span className="font-mono text-xs text-slate-600 max-w-xs truncate block">
-                          {lec.videoUrl}
-                        </span>
+                        <div className="flex items-center gap-2 max-w-xs">
+                          <VideoIcon className="w-4 h-4 text-slate-400 shrink-0" />
+                          <span className="font-mono text-xs text-slate-600 truncate block bg-slate-50 px-2 py-1 rounded-lg border border-slate-200">
+                            {lec.videoUrl}
+                          </span>
+                        </div>
                       </td>
 
-                      <td className="px-6 py-4 text-right space-x-2">
-                        <Link
-                          href={`/courses/${selectedCourseId}/lectures/${id}`}
-                          className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
-                        >
-                          <VideoIcon className="w-3 h-3" />
-                          Watch
-                        </Link>
+                      <td className="px-6 py-4 text-right">
+                        <div className="inline-flex items-center justify-end gap-1.5">
+                          <Link
+                            href={`/courses/${selectedCourseId}/lectures/${id}`}
+                            target="_blank"
+                            className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                            title="Watch Lecture"
+                          >
+                            <VideoIcon className="w-3.5 h-3.5" />
+                            Watch
+                          </Link>
 
-                        <button
-                          onClick={() => openEditModal(lec)}
-                          className="text-xs font-semibold text-slate-700 hover:text-blue-600 px-2 py-1 rounded hover:bg-slate-100 transition-colors"
-                        >
-                          Edit
-                        </button>
+                          <button
+                            onClick={() => openEditModal(lec)}
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-blue-600 px-2.5 py-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+                            title="Edit Lecture"
+                          >
+                            <EditIcon className="w-3.5 h-3.5" />
+                            Edit
+                          </button>
 
-                        <button
-                          onClick={() => setDeletingLecture(lec)}
-                          className="text-xs font-semibold text-rose-600 hover:text-rose-800 px-2 py-1 rounded hover:bg-rose-50 transition-colors"
-                        >
-                          Delete
-                        </button>
+                          <button
+                            onClick={() => setDeletingLecture(lec)}
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 hover:text-rose-800 px-2.5 py-1.5 rounded-xl hover:bg-rose-50 transition-colors cursor-pointer"
+                            title="Delete Lecture"
+                          >
+                            <TrashIcon className="w-3.5 h-3.5" />
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -426,15 +452,25 @@ export default function AdminLecturesPage() {
 
       {/* CREATE LECTURE MODAL */}
       {isCreateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="text-lg font-bold text-slate-900">
-                Add Lecture to Course
-              </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-6 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                  <VideoIcon className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-extrabold text-[#14213D] tracking-tight">
+                    Add Lecture to Course
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Add video content and notes to the selected curriculum
+                  </p>
+                </div>
+              </div>
               <button
                 onClick={() => setIsCreateOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <XIcon className="w-5 h-5" />
               </button>
@@ -446,13 +482,13 @@ export default function AdminLecturesPage() {
 
             <form onSubmit={handleCreateSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-slate-700">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
                   Target Course *
                 </label>
                 <select
                   value={targetCourseId}
                   onChange={(e) => setTargetCourseId(e.target.value)}
-                  className="block w-full rounded-lg border border-slate-300 p-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+                  className="block w-full rounded-xl border border-slate-200 bg-white p-3 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all cursor-pointer"
                   required
                 >
                   {courses.map((c) => (
@@ -470,12 +506,12 @@ export default function AdminLecturesPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, title: e.target.value })
                 }
-                placeholder="e.g. Introduction to TypeScript and Node"
+                placeholder="e.g. Introduction to TypeScript Architecture"
                 required
               />
 
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-slate-700">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
                   Lecture Description *
                 </label>
                 <textarea
@@ -484,14 +520,14 @@ export default function AdminLecturesPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
                   }
-                  placeholder="Summarize the topics covered in this lesson..."
-                  className="block w-full rounded-lg border border-slate-300 p-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+                  placeholder="Summarize the core topics covered in this lesson..."
+                  className="block w-full rounded-xl border border-slate-200 bg-white p-3.5 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
                   required
                 />
               </div>
 
               <Input
-                label="Video URL (YouTube, Vimeo, or MP4) *"
+                label="Video URL (YouTube, Vimeo, or direct MP4) *"
                 type="url"
                 value={formData.videoUrl}
                 onChange={(e) =>
@@ -501,7 +537,7 @@ export default function AdminLecturesPage() {
                 required
               />
 
-              <div className="flex items-center justify-end gap-3 pt-3">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
                 <Button
                   type="button"
                   variant="outline"
@@ -525,15 +561,25 @@ export default function AdminLecturesPage() {
 
       {/* EDIT LECTURE MODAL */}
       {editingLecture && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="text-lg font-bold text-slate-900">
-                Edit Lecture
-              </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-6 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                  <EditIcon className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-extrabold text-[#14213D] tracking-tight">
+                    Edit Lecture
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Update lecture content and video streaming URL
+                  </p>
+                </div>
+              </div>
               <button
                 onClick={() => setEditingLecture(null)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <XIcon className="w-5 h-5" />
               </button>
@@ -555,7 +601,7 @@ export default function AdminLecturesPage() {
               />
 
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-slate-700">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
                   Lecture Description *
                 </label>
                 <textarea
@@ -564,7 +610,7 @@ export default function AdminLecturesPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
                   }
-                  className="block w-full rounded-lg border border-slate-300 p-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+                  className="block w-full rounded-xl border border-slate-200 bg-white p-3.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
                   required
                 />
               </div>
@@ -579,7 +625,7 @@ export default function AdminLecturesPage() {
                 required
               />
 
-              <div className="flex items-center justify-end gap-3 pt-3">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
                 <Button
                   type="button"
                   variant="outline"
@@ -603,18 +649,24 @@ export default function AdminLecturesPage() {
 
       {/* DELETE CONFIRMATION MODAL */}
       {deletingLecture && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
-            <h3 className="text-lg font-bold text-slate-900">
-              Confirm Delete Lecture
-            </h3>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              Are you sure you want to delete lecture &quot;
-              <strong className="text-slate-800">{deletingLecture.title}</strong>
-              &quot;? This cannot be undone.
-            </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+            <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+              <AlertCircleIcon className="w-6 h-6" />
+            </div>
 
-            <div className="flex items-center justify-end gap-3 pt-3">
+            <div className="text-center space-y-2">
+              <h3 className="text-lg font-bold text-slate-900">
+                Confirm Lecture Deletion
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Are you sure you want to permanently delete lecture &quot;
+                <strong className="text-slate-900">{deletingLecture.title}</strong>
+                &quot;? This will remove the video record from the database.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-center gap-3 pt-2">
               <Button
                 type="button"
                 variant="outline"

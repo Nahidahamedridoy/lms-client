@@ -23,12 +23,12 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 }) => {
   return (
     <div
-      className={`text-center py-12 px-6 rounded-2xl border-2 border-dashed border-slate-200 bg-white/60 max-w-xl mx-auto ${className}`}
+      className={`text-center py-14 px-6 rounded-3xl border border-slate-200/90 bg-white shadow-xs max-w-xl mx-auto ${className}`}
     >
-      <div className="mx-auto w-14 h-14 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-4 shadow-xs">
-        {icon || <BookOpenIcon className="w-7 h-7" />}
+      <div className="mx-auto w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4.5 shadow-xs border border-blue-100">
+        {icon || <BookOpenIcon className="w-8 h-8" />}
       </div>
-      <h3 className="text-lg font-semibold text-slate-900 mb-2">{title}</h3>
+      <h3 className="text-lg font-bold text-slate-900 mb-2 tracking-tight">{title}</h3>
       <p className="text-sm text-slate-500 max-w-md mx-auto mb-6 leading-relaxed">
         {description}
       </p>
@@ -37,7 +37,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           {actionHref ? (
             <a
               href={actionHref}
-              className="inline-flex items-center justify-center font-medium rounded-lg text-sm px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-colors"
+              className="inline-flex items-center justify-center font-semibold rounded-xl text-sm px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-500/20 transition-all active:scale-[0.98]"
             >
               {actionText}
             </a>

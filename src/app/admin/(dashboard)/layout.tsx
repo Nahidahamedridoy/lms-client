@@ -41,20 +41,20 @@ export default function AdminDashboardLayout({
   // Block rendering protected dashboard content until authorization is confirmed
   if (isCheckingAuth || !isAuthorized) {
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6 text-white">
+      <div className="min-h-screen bg-[#14213D] flex flex-col items-center justify-center p-6 text-white">
         <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4" />
-        <h3 className="text-base font-semibold text-slate-200">
+        <h3 className="text-base font-bold text-slate-200">
           Verifying Admin Authorization...
         </h3>
         <p className="text-xs text-slate-400 mt-1">
-          Validating JWT credentials with backend security
+          Validating JWT session with backend security
         </p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex bg-slate-50 text-slate-900">
+    <div className="min-h-screen flex bg-[#F8FAFC] text-slate-900">
       {/* Sidebar (Desktop + Mobile Drawer) */}
       <AdminSidebar
         isOpen={isSidebarOpen}

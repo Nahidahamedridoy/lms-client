@@ -11,6 +11,7 @@ import {
   GraduationCapIcon,
   LockIcon,
   ShieldCheckIcon,
+  ArrowRightIcon,
 } from '@/components/ui/icons';
 
 export default function AdminLoginPage() {
@@ -56,43 +57,49 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-blue-950 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-[#14213D] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Ambient background glows */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 right-10 w-80 h-80 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 space-y-6">
         {/* Brand Header */}
-        <div className="text-center space-y-2">
+        <div className="text-center space-y-3">
           <Link
             href="/"
-            className="inline-flex items-center gap-2.5 group focus:outline-none"
+            className="inline-flex items-center gap-3 group focus:outline-none"
           >
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/25 group-hover:scale-105 transition-transform">
-              <GraduationCapIcon className="w-7 h-7" />
+            <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30 group-hover:scale-105 transition-transform">
+              <GraduationCapIcon className="w-6 h-6" />
             </div>
             <div className="text-left">
-              <div className="flex items-center gap-1.5">
-                <span className="font-bold text-xl text-white tracking-tight leading-none">
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-2xl text-white tracking-tight leading-none">
                   DataPollex
                 </span>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-400/30">
+                <span className="w-2 h-2 rounded-full bg-[#F59E0B]" />
+                <span className="text-[10px] uppercase font-extrabold tracking-wider px-2 py-0.5 rounded-full bg-blue-500/25 text-blue-200 border border-blue-400/30">
                   Admin
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 font-medium leading-none mt-1">
-                Central Management Portal
+                Central Learning Management Suite
               </p>
             </div>
           </Link>
-          <h2 className="text-2xl font-bold text-white tracking-tight pt-3">
-            Admin Sign In
-          </h2>
-          <p className="text-xs text-slate-400">
-            Sign in with administrative credentials to access protected routes
-          </p>
+
+          <div className="pt-2">
+            <h2 className="text-2xl font-extrabold text-white tracking-tight">
+              Admin Portal Sign In
+            </h2>
+            <p className="text-xs text-slate-400 mt-1">
+              Authenticate with administrative credentials to access protected management routes
+            </p>
+          </div>
         </div>
 
-        {/* Card */}
-        <div className="bg-white rounded-3xl shadow-2xl shadow-black/40 p-8 border border-slate-100 space-y-6">
+        {/* Auth Card */}
+        <div className="bg-white rounded-3xl shadow-2xl shadow-black/50 p-7 sm:p-9 border border-slate-100 space-y-6">
           {errorMessage && (
             <ErrorMessage
               title="Authentication Notice"
@@ -122,20 +129,20 @@ export default function AdminLoginPage() {
             />
 
             <div className="flex items-center justify-between text-xs pt-1">
-              <label className="flex items-center gap-2 text-slate-600 cursor-pointer">
+              <label className="flex items-center gap-2 text-slate-600 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                 />
-                Remember session
+                <span>Remember session</span>
               </label>
 
               <button
                 type="button"
                 onClick={handleFillCredentials}
-                className="text-blue-600 hover:text-blue-800 font-medium underline underline-offset-2 cursor-pointer"
+                className="text-xs font-bold text-blue-600 hover:text-blue-800 underline underline-offset-2 cursor-pointer"
               >
                 Use Seed Credentials
               </button>
@@ -156,18 +163,19 @@ export default function AdminLoginPage() {
           </form>
 
           {/* Evaluator Quick Note */}
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-600 space-y-1.5">
-            <div className="flex items-center gap-1.5 font-semibold text-slate-800">
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs text-slate-600 space-y-2">
+            <div className="flex items-center gap-1.5 font-bold text-[#14213D]">
               <ShieldCheckIcon className="w-4 h-4 text-blue-600" />
-              <span>Backend Authentication Route</span>
+              <span>JWT Authentication & API Synchronized</span>
             </div>
-            <p className="text-slate-500 leading-relaxed">
-              Target endpoint:{' '}
-              <code className="font-mono text-blue-600 font-medium">
+            <p className="text-slate-500 leading-relaxed text-[11px]">
+              POST endpoint:{' '}
+              <code className="font-mono text-blue-600 font-semibold">
                 {API_BASE_URL}/auth/login
               </code>
-              . Valid seed credentials: <code className="font-mono">admin@example.com</code> /{' '}
-              <code className="font-mono">admin123456</code>.
+              <br />
+              Default seed account: <code className="font-mono font-medium text-slate-800">admin@example.com</code> /{' '}
+              <code className="font-mono font-medium text-slate-800">admin123456</code>
             </p>
           </div>
 
@@ -175,9 +183,10 @@ export default function AdminLoginPage() {
           <div className="text-center pt-2 border-t border-slate-100">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600 transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-blue-600 transition-colors"
             >
-              ← Back to public LMS student portal
+              <span>Return to Public Student Portal</span>
+              <ArrowRightIcon className="w-3.5 h-3.5" />
             </Link>
           </div>
         </div>
